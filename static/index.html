@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #000; color: #e7e9ea; }
+        .x-border { border-color: #2f3336; }
+        /* CSS製アイコン */
+        .i-search { width: 18px; height: 18px; border: 2px solid #71767b; border-radius: 50%; position: relative; }
+        .i-search::after { content: ""; position: absolute; width: 2px; height: 7px; background: #71767b; bottom: -5px; right: -3px; transform: rotate(-45deg); }
+        .i-msg { width: 18px; height: 14px; border: 2px solid #71767b; border-radius: 3px; position: relative; }
+        .i-re { width: 18px; height: 10px; border-top: 2px solid #71767b; border-bottom: 2px solid #71767b; position: relative; }
+        .i-re::before { content: "▲"; font-size: 8px; position: absolute; top: -6px; right: -2px; color: #71767b; }
+        .i-heart { width: 12px; height: 12px; background: #71767b; transform: rotate(-45deg); position: relative; }
+        .i-heart::before, .i-heart::after { content: ""; width: 12px; height: 12px; background: #71767b; border-radius: 50%; position: absolute; }
+        .i-heart::before { top: -6px; left: 0; } .i-heart::after { left: 6px; top: 0; }
+        /* スピナー */
+        .loader { width: 26px; height: 26px; border: 3px solid #1d9bf0; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex justify-center">
+
+    <div class="hidden md:flex flex-col w-64 h-screen sticky top-0 p-4 border-r x-border">
+        <div class="p-3 mb-4 w-fit hover:bg-white/10 rounded-full transition cursor-pointer">
+            <svg viewBox="0 0 24 24" class="w-8 h-8 fill-white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+        </div>
+        <nav class="space-y-2 text-xl font-bold">
+            <div class="p-3 hover:bg-white/10 rounded-full w-fit px-6 cursor-pointer">Home</div>
+            <div class="p-3 hover:bg-white/10 rounded-full w-fit px-6 cursor-pointer">Explore</div>
+            <div class="p-3 hover:bg-white/10 rounded-full w-fit px-6 cursor-pointer">Notifications</div>
+        </nav>
+        <button class="mt-8 bg-[#1d9bf0] py-3 rounded-full font-bold text-lg hover:bg-[#1a8cd8]">Post</button>
+    </div>
+
+    <main class="w-full max-w-[600px] min-h-screen border-r x-border">
+        <div class="sticky top-0 bg-black/80 backdrop-blur-md z-40 border-b x-border p-4">
+            <div class="relative flex items-center">
+                <div class="absolute left-4 i-search"></div>
+                <input type="text" id="q" class="w-full bg-[#202327] rounded-full py-2.5 pl-12 pr-4 outline-none border border-transparent focus:border-[#1d9bf0] focus:bg-black transition" placeholder="Search">
+                <div id="ld" class="hidden ml-4 loader"></div>
+            </div>
+        </div>
+
+        <div id="content">
+            <div class="p-20 text-center text-gray-500">ユーザー名(@name)か検索ワードを入力してください</div>
+        </div>
+    </main>
+
+    <div class="hidden lg:block w-80 h-screen sticky top-0 p-4">
+        <div class="bg-[#16181c] rounded-2xl p-4 border x-border">
+            <h2 class="font-bold text-xl mb-4">What's happening</h2>
+            <div class="text-sm text-gray-500">Trending in Japan</div>
+            <div class="font-bold mb-4">#NitterRSS</div>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://your-backend.onrender.com/api/search?q=";
+
+        async function search(val) {
+            const ld = document.getElementById('ld');
+            const box = document.getElementById('content');
+            ld.classList.remove('hidden');
+            box.style.opacity = "0.5";
+
+            try {
+                const res = await fetch(API + encodeURIComponent(val));
+                const data = await res.json();
+                
+                box.innerHTML = data.tweets.map(t => `
+                    <article class="p-4 border-b x-border hover:bg-white/[0.02] transition cursor-pointer">
+                        <div class="flex space-x-3">
+                            <div class="flex-shrink-0">
+                                ${data.p_img ? `<img src="${data.p_img}" class="w-10 h-10 rounded-full">` : `<div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center font-bold text-sm">${t.author[0]}</div>`}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-1">
+                                    <span class="font-bold text-[15px] hover:underline">${t.author}</span>
+                                    <span class="text-[#71767b] text-[15px]">· ${t.date.split(' ').slice(1,3).join(' ')}</span>
+                                </div>
+                                <div class="text-[15px] leading-normal text-[#e7e9ea] mt-0.5">${t.text}</div>
+                                ${t.imgs.map(img => `<img src="${img}" class="mt-3 rounded-2xl border x-border w-full max-h-[512px] object-cover">`).join('')}
+                                <div class="flex justify-between mt-3 max-w-[425px] text-[#71767b]">
+                                    <div class="flex items-center space-x-2 group hover:text-[#1d9bf0]"><div class="p-2 group-hover:bg-[#1d9bf0]/10 rounded-full"><div class="i-msg"></div></div><span class="text-xs">12</span></div>
+                                    <div class="flex items-center space-x-2 group hover:text-[#00ba7c]"><div class="p-2 group-hover:bg-[#00ba7c]/10 rounded-full"><div class="i-re"></div></div><span class="text-xs">45</span></div>
+                                    <div class="flex items-center space-x-2 group hover:text-[#f91880]"><div class="p-2 group-hover:bg-[#f91880]/10 rounded-full"><div class="i-heart"></div></div><span class="text-xs">1.2k</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+            } catch (e) {
+                box.innerHTML = `<div class="p-10 text-center text-red-500">Error: インスタンスがダウンしている可能性があります</div>`;
+            } finally {
+                ld.classList.add('hidden');
+                box.style.opacity = "1";
+            }
+        }
+
+        document.getElementById('q').addEventListener('keypress', e => {
+            if(e.key === 'Enter') search(e.target.value);
+        });
+    </script>
+</body>
+</html>
